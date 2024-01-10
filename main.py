@@ -76,7 +76,7 @@ def sum(input : schemas.SummerizeInput):
 
 @chibi_nlp.get("/paraphrase/")
 def paraphrase(inpMode :  str, text : str, preText : str = paraphrasePreText):
-    modeActionValidator(inpMode, 'paraphrase')
+    # modeActionValidator(inpMode, 'paraphrase')
     mode = modes[inpMode]
     print(f"preText = {preText}")
     res = mode.paraphrase(mode, text, preText)

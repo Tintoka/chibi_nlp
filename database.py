@@ -36,5 +36,5 @@ class APIKeys(Base):
 
 
 
-# setAPIAvailability(s, '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', False)
+# setAPIAvailability(s, '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', False)
 # print(getAvailableAPIKey(s))
