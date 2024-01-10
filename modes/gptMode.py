@@ -5,9 +5,9 @@ from openai import OpenAI, RateLimitError
 
 import backoff
 import os
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import crud 
-load_dotenv()
+#load_dotenv()
 # client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 MAX_REQUEST_NUMBER = 200
 
