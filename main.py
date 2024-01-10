@@ -1,76 +1,87 @@
-from fastapi import FastAPI, Depends
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI
 
-import modes.mode as generalMode
 import modes.gptMode as gpt
-
-  
-import starlette.status as status
 import schemas
-import requests
 
-from typing_extensions import Annotated
 
-import axios
 
+modeList = ['gpt', 'artin']
+
+
+port = 8000
 chibi_nlp = FastAPI()
 
 
-
+paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with \"ParaphrasedText\" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
+summerizePreText = 'please summerize the following paragraph in its native language and return it in a json format with \"summerizedText\" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
 
 def modeMaker(inpMode : str) :
     if inpMode == 'gpt' :
         res = gpt.GptMode
-        # sum(res)
 
 
+        res.client = gpt.createOpenAiConnection()
         return res
     if inpMode == 'artin' :
         pass
-    print("invalid mode")
-    return -1    
+
+    # raise Exception("Invalid Mode")
 
 
 
+
+
+modes = {}
+for m in modeList :
+    mode = modeMaker(m)
+    modes[m] = mode
+
+methods = {}
 @chibi_nlp.get("/")
-def decideModeAndAction():
-    # inpAction = input("Enter requiered action")
+def getModeList(action : str):
+    resModes = []
+    for mKey in list(modes.keys()) :
+        m = modes.get(mKey)
+        methodList = [func for func in dir(m) if callable(getattr(m, func)) and not func.startswith("__")]
+        methods[mKey] = methodList
+        if action in methodList :
+            modeName = mKey
+            resModes.append(modeName)
+    #TODO : add a stanard format for answer
+    return(resModes)        
 
 
-    inpMode = input("Enter mode : ")
-    mode = modeMaker(inpMode)
+    #     url = f"http://127.0.0.1:8000/summerize/?inpMode={inpMode}&text={inpText}"
 
-    inpAction = input("Enter Action : ")
-    #TODO send a request to summerize
-    print("Sending request...")
-    if inpAction == 'summerize':
-        url = f"http://127.0.0.1:8000/summerize/?inpMode={inpMode}"
-    elif inpAction == 'paraphrase':
-        url = f"http://127.0.0.1:8000/paraphrase/?inpMode={inpMode}"         
-    
-    response = requests.get(url,mode)
-
-    print(f"Response : \n", response)
-
+def modeActionValidator(modeAction : schemas.ModeAction):
+    if modeAction.mode not in modes.keys():
+        raise Exception(f"There is no mode with name : {modeAction.mode}")
+    if modeAction.mode not in getModeList(modeAction.action):
+        raise Exception(f"The Mode {modeAction.mode} doesn't have a summerize method")
 
 
 
 @chibi_nlp.get("/summerize/")
-def sum(inpMode :  str, my_dependency: dict = Depends(modeMaker)):
-    mode = modeMaker(inpMode)
-    text = "Konnichiwa!Summerize!"
-    res = print(mode.summerize(mode, text))
+def sum(input : schemas.SummerizeInput):
+    modeAction = schemas.ModeAction(mode=input.inpMode, action='summerize')
+    modeActionValidator(modeAction)
+    mode = modes[input.inpMode]
+    res = mode.summerize(mode, input.text, input.preText)
+    print(res)
     return res
+    
 
 
 
 
 @chibi_nlp.get("/paraphrase/")
-def paraphrase(inpMode :  str, my_dependency: dict = Depends(modeMaker)):
-    mode = modeMaker(inpMode)
-    text = "Konbanwa!Para-chan!"
-    res = mode.paraphrase(mode, text)
+def paraphrase(inpMode :  str, text : str, preText : str = paraphrasePreText):
+    modeActionValidator(inpMode, 'paraphrase')
+    mode = modes[inpMode]
+    print(f"preText = {preText}")
+    res = mode.paraphrase(mode, text, preText)
     print(res)
     return res
+
 
 

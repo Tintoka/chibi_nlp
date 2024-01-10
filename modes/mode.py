@@ -1,4 +1,5 @@
 class Mode():
+    reqNum : int = 0
     def preprocess(self, action, text):
         pass
 
