@@ -17,7 +17,10 @@ class Base(DeclarativeBase):
 
 metadata = MetaData()
 current_directory = os.getcwd()
+srcIndex = str.rfind(current_directory, "src")
+current_directory = current_directory[:srcIndex]
 
+print("currenty in : " + current_directory)
 #check if database exists, if not, create one.
 path = current_directory + "/DataBase"
 
@@ -32,15 +35,8 @@ class APIKeys(Base):
     def __repr__(self) -> str:
          return f"APIKeys(id={self.id!r}, name={self.name!r},isAvailable={self.isAvailable!r})"
 
-engine = sqlalchemy.create_engine("sqlite+pysqlite:///" + path + "/chibi_nlp.db", echo=True)
-# Reflect the database
-metadata.reflect(bind=engine)
-
-# Check if the table existsyaml
 
 
-# Base.metadata.drop_all(engine)
-# print("Droped the database!")
         
 if(os.path.exists(path)):
     # print(su.database_exists("sqlite+pysqlite:///" + path + "/chibi_nlp.db"))

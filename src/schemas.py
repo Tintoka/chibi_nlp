@@ -1,4 +1,7 @@
 from pydantic import BaseModel
+import sys, os
+
+sys.path.append(os.path.abspath(os.path.join('..')))
 import modes.mode as generalMode
 
 paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with \"ParaphrasedText\" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'

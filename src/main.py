@@ -1,19 +1,22 @@
 from fastapi import FastAPI, Query
 
-import modes.gptMode as gpt
 import schemas
+import os, sys
+
 
 from typing import Literal
+import modes.gptMode as gpt
 
 modeList = ['gpt', 'artin']
-
 
 port = 8000
 chibi_nlp = FastAPI()
 
 
-paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with \"ParaphrasedText\" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
-summerizePreText = 'please summerize the following paragraph in its native language and return it in a json format with \"summerizedText\" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
+paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with "ParaphrasedText" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
+summerizePreText = 'please summerize the following paragraph in its native language and return it in a json format with "summerizedText" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
+
+actions = ['summerize', 'paraphrase']
 
 def modeMaker(inpMode : str) :
     if inpMode == 'gpt' :
@@ -38,7 +41,7 @@ for m in modeList :
 
 methods = {}
 @chibi_nlp.get("/")
-def getModeList(action : str):
+def getModeList(action : str = Query(enum= actions)):
     resModes = []
     for mKey in list(modes.keys()) :
         m = modes.get(mKey)

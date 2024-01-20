@@ -33,7 +33,12 @@ def addAPIKey(apiID : str, apiName = ''):
     db.s.add(apiToAdd)
     db.s.commit()
     db.s.refresh(apiToAdd)
-    return "API ADDED : " + str(apiToAdd) 
+    successMessage = {
+        "status" : "success",
+        "message" : "API ADDED SUCCESSFULLY "  ,
+        "data" : getAPIKey(apiID)
+        } 
+    return successMessage
 
 @crud.get("/delete_api_key_id", tags=["Delete API key"])
 def deleteAPIKeyByID(apiID : str) :
@@ -45,7 +50,12 @@ def deleteAPIKeyByID(apiID : str) :
 )
     db.s.execute(deleteStm)
     db.s.commit()
-    return "DELETED : " + apiID
+    successMessage = {
+        "status" : "success",
+        "message" : "DELETED : " + apiID,
+        "data" : null
+        } 
+    return successMessage
 
 @crud.get("/delete_api_key_name", tags=["Delete API key"])    
 def deleteAPIKeyByName(apiName : str) :
@@ -57,7 +67,12 @@ def deleteAPIKeyByName(apiName : str) :
 )
     db.s.execute(deleteStm)
     db.s.commit()
-    return "DELETED : " + apiName
+    successMessage = {
+        "status" : "success",
+        "message" : "DELETED : " + apiName,
+        "data" : null
+        } 
+    return successMessage
 
 @crud.get("/api_availability", tags=["Change API Key Attribute"])
 def setAPIAvailability(apiID : str, availability : bool):
@@ -65,6 +80,12 @@ def setAPIAvailability(apiID : str, availability : bool):
     db.s.execute(updateStm)
     print("Updated the availability : " + apiID)
     db.s.commit()
+    successMessage = {
+        "status" : "success",
+        "message" : "Updated the availability successfully",
+        "data" : getAPIKey(apiID)
+    }
+    return successMessage
 
 @crud.get("/set_name", tags=["Change API Key Attribute"])
 def setName(apiID : str, apiName : str):
@@ -72,6 +93,16 @@ def setName(apiID : str, apiName : str):
         updateStm = update(db.APIKeys).values(name = apiName).where(db.APIKeys.id == apiID)
         db.s.execute(updateStm)
         print("Updated the name")
-        db.s.commit()       
-        return "UPDATED NAME : " + apiID + "TO: " + getAPIKey(apiID)[0].name
-    raise Exception("No Such API key")    
+        db.s.commit()   
+        successMessage = {
+            "status" : "success",
+            "message" : "UPDATED NAME TO: " + getAPIKey(apiID)[0].name,
+            "data" : getAPIKey(apiID)
+        }    
+        return successMessage
+    failedMessage = {
+        "status" : "failed",
+        "message" : "No Such API key",
+        "data" : null
+    }
+    raise Exception(failedMessage)    

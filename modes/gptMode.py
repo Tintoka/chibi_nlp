@@ -12,12 +12,13 @@ import crud
 MAX_REQUEST_NUMBER = 200
 
 port = 5000
-i : int = 0
+i : int = -1
 
 def createOpenAiConnection():
     #get a valid API_KEY from the database(or ask another API)
     global i 
-    apiKey = crud.getAvailableAPIKey()[i]
+    i = ( i + 1 ) % len(crud.getAvailableAPIKey()) 
+    apiKey = crud.getAvailableAPIKey()[abs(i)]
     # print("Fetched API Key : ", apiKey)
     
     #Create and return a conenction with that API_KEY
@@ -26,7 +27,6 @@ def createOpenAiConnection():
     print("***********************************")
     print(f"created gpt client from {apiName}!")
     print("***********************************")
-    i = ( i + 1 ) % len(crud.getAvailableAPIKey()) 
     return client
 
 
@@ -75,19 +75,30 @@ class GptMode(mode.Mode):
         preprocessedText = self.preprocess(self, 'paraphrase', text, preText)
         self.client = createOpenAiConnection()
         print("Sending request to GPT...")
-        completion = self.client.chat.completions.create(
-            model = "gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": preprocessedText},
-                {"role": "user", "content": preprocessedText}
-            ]
-        )
-        # self.reqNum += 1
-        print("Sent GPT REQUEST!")
-        paraphrasedText = completion.choices[0].message
-        paraphrasedText = { "ParaphrasedText": preText + text}
-        print(paraphrasedText['ParaphrasedText'])
-        # paraphrasedText = "Paraphrased Text mutant~"
-        # paraphrasedText = "GPT paraphrased this Text~, " + preprocessedText
-        return self.postprocess(self, paraphrasedText)
+        try:
+            completion = self.client.chat.completions.create(
+                model = "gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": preprocessedText},
+                    {"role": "user", "content": preprocessedText}
+                ]
+            )
+            # self.reqNum += 1
+            print("Sent GPT REQUEST!")
+
+            paraphrasedText = completion.choices[0].message
+            # paraphrasedText = { "ParaphrasedText": preText + text}
+            print(paraphrasedText['ParaphrasedText'])
+            # paraphrasedText = "Paraphrased Text mutant~"
+            # paraphrasedText = "GPT paraphrased this Text~, " + preprocessedText
+            return self.postprocess(self, paraphrasedText)
+        except RateLimitError as e:
+            errorMessage = {
+                "state" : "failed",
+                "message" : "OpenAI API request exceeded rate limit: {e}",
+                "data" : []
+            }
+            return(errorMessage) 
+
+
     
