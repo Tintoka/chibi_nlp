@@ -1,9 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 import modes.gptMode as gpt
 import schemas
 
-
+from typing import Literal
 
 modeList = ['gpt', 'artin']
 
@@ -51,7 +51,7 @@ def getModeList(action : str):
     return(resModes)        
 
 
-    #     url = f"http://127.0.0.1:8000/summerize/?inpMode={inpMode}&text={inpText}"
+
 
 def modeActionValidator(modeAction : schemas.ModeAction):
     if modeAction.mode not in modes.keys():
@@ -70,18 +70,18 @@ def sum(input : schemas.SummerizeInput):
     print(res)
     return res
     
-
-
-
+# TODO : uncomment the true paraModeList after test
+# paraModeList = [i for i in getModeList('paraphrase')]
+paraModeList = ['gpt','artin']
 
 @chibi_nlp.get("/paraphrase/")
-def paraphrase(inpMode :  str, text : str, preText : str = paraphrasePreText):
-    # modeActionValidator(inpMode, 'paraphrase')
+def paraphrase( text : str, inpMode :  str = Query(enum=paraModeList) , preText : str = paraphrasePreText):
+    modeAction = schemas.ModeAction(mode=inpMode, action='paraphrase')
+    modeActionValidator(modeAction)
     mode = modes[inpMode]
     print(f"preText = {preText}")
     res = mode.paraphrase(mode, text, preText)
     print(res)
     return res
-
 
 

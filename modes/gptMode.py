@@ -12,16 +12,21 @@ import crud
 MAX_REQUEST_NUMBER = 200
 
 port = 5000
-
+i : int = 0
 
 def createOpenAiConnection():
     #get a valid API_KEY from the database(or ask another API)
-    apiKey = crud.getAvailableAPIKey()[0]
+    global i 
+    apiKey = crud.getAvailableAPIKey()[i]
     # print("Fetched API Key : ", apiKey)
     
     #Create and return a conenction with that API_KEY
     client = OpenAI(api_key=apiKey)
-    print("created gpt client!")
+    apiName = crud.getAPIKey(apiKey)[0].name
+    print("***********************************")
+    print(f"created gpt client from {apiName}!")
+    print("***********************************")
+    i = ( i + 1 ) % len(crud.getAvailableAPIKey()) 
     return client
 
 
@@ -41,7 +46,7 @@ class GptMode(mode.Mode):
     def postprocess(self, text):
         return (f'++++++ {text}) +++++++')
     
-    @backoff.on_exception(backoff.expo, RateLimitError)
+    # @backoff.on_exception(backoff.expo, RateLimitError)
     def summerize(self, text : str, preText) -> str:
         preprocessedText = self.preprocess(self,'summerize', text, preText)
         if  self.reqNum > MAX_REQUEST_NUMBER :
@@ -65,13 +70,10 @@ class GptMode(mode.Mode):
         summerizedText =  ("GPT summerized the text~ , " + preprocessedText)
         return self.postprocess(self, summerizedText) 
     
-    @backoff.on_exception(backoff.expo, RateLimitError)
+    # @backoff.on_exception(backoff.expo, RateLimitError)
     def paraphrase(self, text, preText):
         preprocessedText = self.preprocess(self, 'paraphrase', text, preText)
-        if  self.reqNum > MAX_REQUEST_NUMBER :
-            self.client = createOpenAiConnection()
-            print("Created a New Connection!")
-            self.reqNum = 0
+        self.client = createOpenAiConnection()
         print("Sending request to GPT...")
         completion = self.client.chat.completions.create(
             model = "gpt-3.5-turbo",
@@ -80,13 +82,12 @@ class GptMode(mode.Mode):
                 {"role": "user", "content": preprocessedText}
             ]
         )
-        self.reqNum += 1
+        # self.reqNum += 1
         print("Sent GPT REQUEST!")
         paraphrasedText = completion.choices[0].message
-#         paraphrasedText = {
-# "ParaphrasedText": preText + text}
-#         print(paraphrasedText['ParaphrasedText'])
-
+        paraphrasedText = { "ParaphrasedText": preText + text}
+        print(paraphrasedText['ParaphrasedText'])
+        # paraphrasedText = "Paraphrased Text mutant~"
         # paraphrasedText = "GPT paraphrased this Text~, " + preprocessedText
         return self.postprocess(self, paraphrasedText)
     
