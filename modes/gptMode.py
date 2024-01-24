@@ -47,10 +47,10 @@ class GptMode(mode.Mode):
             return (preText + text)
         
         if action == 'paraphrase':
-            numOfReqStr = str(numOfReq)
-            resText = f"{preText}\nthe text is after Beginning of text up to end of text Beginning of the text\n{text}\n end of text\n return a list that contains {numOfReqStr}"
-            resText = resText + "number of the requested item, seperated by newline" 
-            return resText
+            preText = preText.replace("[placeholder_numberOfRequest]", str(numOfReq))
+            # numOfReqStr = str(numOfReq)
+            # resText = 
+            return (preText + text)
 
     def postprocess(self, text):
         resText = text.splitlines()

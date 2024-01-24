@@ -13,7 +13,7 @@ port = 8000
 chibi_nlp = FastAPI()
 
 
-paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with ParaphrasedText as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences'
+paraphrasePreText = 'return a list containing [placeholder_numberOfRequest] paraphrased of the following text in its native language, seperating with a newline'
 summerizePreText = 'please summerize the following paragraph in its native language and return it in a json format with summerizedText as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences'
 
 actions = ['summerize', 'paraphrase']
@@ -83,7 +83,7 @@ def paraphrase( text : str, inpMode :  str = Query(enum=paraModeList) , preText 
     modeActionValidator(modeAction)
     mode = modes[inpMode]
     print(f"preText = {preText}")
-    res = mode.paraphrase(mode, text, numberOfRequest,preText)
+    res = mode.paraphrase(mode, text,preText, numberOfRequest)
     print(res)
     return res
 
