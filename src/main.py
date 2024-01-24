@@ -13,8 +13,8 @@ port = 8000
 chibi_nlp = FastAPI()
 
 
-paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with "ParaphrasedText" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
-summerizePreText = 'please summerize the following paragraph in its native language and return it in a json format with "summerizedText" as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences\n'
+paraphrasePreText = 'please paraphrase the following paragraph in its native language and return it in a json format with ParaphrasedText as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences'
+summerizePreText = 'please summerize the following paragraph in its native language and return it in a json format with summerizedText as key? please dont type anything else and try to maintain writers structure,if the text has lot of slang use a lot of slang, if its formal use formal words and sentences'
 
 actions = ['summerize', 'paraphrase']
 
@@ -78,12 +78,12 @@ def sum(input : schemas.SummerizeInput):
 paraModeList = ['gpt','artin']
 
 @chibi_nlp.get("/paraphrase/")
-def paraphrase( text : str, inpMode :  str = Query(enum=paraModeList) , preText : str = paraphrasePreText):
+def paraphrase( text : str, inpMode :  str = Query(enum=paraModeList) , preText : str = paraphrasePreText, numberOfRequest : int = Query(lt=50, gt=0)):
     modeAction = schemas.ModeAction(mode=inpMode, action='paraphrase')
     modeActionValidator(modeAction)
     mode = modes[inpMode]
     print(f"preText = {preText}")
-    res = mode.paraphrase(mode, text, preText)
+    res = mode.paraphrase(mode, text, numberOfRequest,preText)
     print(res)
     return res
 

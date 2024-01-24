@@ -1,5 +1,6 @@
 from . import mode
 import json
+import time
 
 from openai import OpenAI, RateLimitError
 
@@ -14,13 +15,18 @@ MAX_REQUEST_NUMBER = 200
 port = 5000
 i : int = -1
 
+
+def timeStamp():
+    curTime = time.time()
+    return time.ctime(curTime)
+
+
 def createOpenAiConnection():
     #get a valid API_KEY from the database(or ask another API)
     global i 
     i = ( i + 1 ) % len(crud.getAvailableAPIKey()) 
     apiKey = crud.getAvailableAPIKey()[abs(i)]
-    # print("Fetched API Key : ", apiKey)
-    
+
     #Create and return a conenction with that API_KEY
     client = OpenAI(api_key=apiKey)
     apiName = crud.getAPIKey(apiKey)[0].name
@@ -36,19 +42,32 @@ class GptMode(mode.Mode):
         print(f"reqNum = {self.reqNum}")
         self.client = createOpenAiConnection()
 
-    def preprocess(self, action, text, preText) -> str:
+    def preprocess(self, action, text, preText, numOfReq) -> str:
         if action == 'summerize':
             return (preText + text)
         
         if action == 'paraphrase':
-            return (preText + text)
+            numOfReqStr = str(numOfReq)
+            resText = f"{preText}\nthe text is after Beginning of text up to end of text Beginning of the text\n{text}\n end of text\n return a list that contains {numOfReqStr}"
+            resText = resText + "number of the requested item, seperated by newline" 
+            return resText
 
     def postprocess(self, text):
-        return (f'++++++ {text}) +++++++')
+        resText = text.splitlines()
+        resJson = {"paraphrased Texts" : resText}
+        message = {
+            "status" : "success",
+            "message" : "paraphrased the text successfully",
+            "version" : "3.5-turbo",
+            "time" : timeStamp(),
+            "data" :  resJson
+        }
+        print(f"Message : {message}")
+        return (message)
     
     # @backoff.on_exception(backoff.expo, RateLimitError)
-    def summerize(self, text : str, preText) -> str:
-        preprocessedText = self.preprocess(self,'summerize', text, preText)
+    def summerize(self, text : str, numOfReq : int , preText ) -> str:
+        preprocessedText = self.preprocess(self,'summerize', text, preText, numOfReq)
         if  self.reqNum > MAX_REQUEST_NUMBER :
             self.client = createOpenAiConnection()
             print("Created a New Connection!")
@@ -63,7 +82,7 @@ class GptMode(mode.Mode):
         )
         self.reqNum += 1
         print("Sent GPT REQUEST!")
-        paraphrasedText = completion.choices[0].message
+        paraphrasedText = completion.choices[0].message.content
 
 
 
@@ -71,8 +90,8 @@ class GptMode(mode.Mode):
         return self.postprocess(self, summerizedText) 
     
     # @backoff.on_exception(backoff.expo, RateLimitError)
-    def paraphrase(self, text, preText):
-        preprocessedText = self.preprocess(self, 'paraphrase', text, preText)
+    def paraphrase(self, text, preText, numOfReq : int):
+        preprocessedText = self.preprocess(self, 'paraphrase', text, preText, numOfReq)
         self.client = createOpenAiConnection()
         print("Sending request to GPT...")
         try:
@@ -86,16 +105,16 @@ class GptMode(mode.Mode):
             # self.reqNum += 1
             print("Sent GPT REQUEST!")
 
-            paraphrasedText = completion.choices[0].message
+            paraphrasedText = completion.choices[0].message.content
             # paraphrasedText = { "ParaphrasedText": preText + text}
-            print(paraphrasedText['ParaphrasedText'])
+            print(paraphrasedText)
             # paraphrasedText = "Paraphrased Text mutant~"
             # paraphrasedText = "GPT paraphrased this Text~, " + preprocessedText
             return self.postprocess(self, paraphrasedText)
         except RateLimitError as e:
             errorMessage = {
                 "state" : "failed",
-                "message" : "OpenAI API request exceeded rate limit: {e}",
+                "message" : f"OpenAI API : request exceeded rate limit: {e}",
                 "data" : []
             }
             return(errorMessage) 

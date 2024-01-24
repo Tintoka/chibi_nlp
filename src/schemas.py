@@ -1,3 +1,4 @@
+from enum import Enum
 from pydantic import BaseModel
 import sys, os
 
@@ -11,7 +12,7 @@ class Mode(BaseModel):
     mode : type
 
 class ModeAction(BaseModel):
-    mode : str
+    mode : str 
     action : str
 
 
